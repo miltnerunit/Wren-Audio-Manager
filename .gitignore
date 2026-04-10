@@ -1,0 +1,23 @@
+# Xcode
+xcuserdata/
+*.xcuserstate
+DerivedData/
+
+# macOS
+.DS_Store
+
+# VSCode
+*.code-workspace
+
+# Logic
+Logic/
+
+# Android
+*.iml
+.gradle/
+build/
+local.properties
+.idea/
+captures/
+.externalNativeBuild/
+.cxx/
