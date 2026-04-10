@@ -1,0 +1,14 @@
+Event Name,Category,Variations,Variation Mode,Loops,Notes
+tilePickUp,Tile Interactions,1,—,No,
+tileDrop,Tile Interactions,8,Random no-repeat,No,Files: tileDrop_1.wav … tileDrop_8.wav
+tilePlace,Tile Interactions,8,Sequential,No,Files: tilePlace_1.wav … tilePlace_8.wav
+uiTap,UI,1,—,No,
+uiModalOpen,UI,1,—,No,
+uiModalClose,UI,1,—,No,
+gameSuccess,Game,1,—,No,
+gameError,Game,1,—,No,
+reward1,Rewards,1,—,No,Voice limit: 1 (never overlaps)
+reward2,Rewards,1,—,No,Voice limit: 1 (never overlaps)
+reward3,Rewards,1,—,No,Voice limit: 1 (never overlaps)
+reward4,Rewards,1,—,No,Voice limit: 1 (never overlaps)
+loopAmbient,Looping,1,—,Yes,Call stop() to end
