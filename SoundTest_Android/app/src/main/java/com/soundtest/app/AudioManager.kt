@@ -1,10 +1,17 @@
 package com.soundtest.app
 
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.res.AssetFileDescriptor
 import android.media.AudioAttributes
+import android.media.AudioDeviceCallback
+import android.media.AudioDeviceInfo
 import android.media.AudioManager as SystemAudioManager
 import android.media.SoundPool
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 
 
@@ -112,7 +119,10 @@ class AudioManager private constructor(context: Context) {
     // MARK: Private State
 
     private val appContext = context.applicationContext
+    private val sysAudioManager = appContext.getSystemService(Context.AUDIO_SERVICE) as SystemAudioManager
     private val soundPool: SoundPool
+    private lateinit var noisyReceiver: BroadcastReceiver
+    private lateinit var audioDeviceCallback: AudioDeviceCallback
 
     /// soundId cache — each file is loaded from assets exactly once.
     private val soundIds: MutableMap<String, Int> = mutableMapOf()
@@ -143,10 +153,9 @@ class AudioManager private constructor(context: Context) {
     val lastPlayedFilename: MutableMap<String, String> = mutableMapOf()
 
     init {
-        val sysAudio = appContext.getSystemService(Context.AUDIO_SERVICE) as SystemAudioManager
-        val nativeSampleRate = sysAudio.getProperty(SystemAudioManager.PROPERTY_OUTPUT_SAMPLE_RATE)
+        val nativeSampleRate = sysAudioManager.getProperty(SystemAudioManager.PROPERTY_OUTPUT_SAMPLE_RATE)
             ?.toIntOrNull() ?: 48000
-        val framesPerBuffer = sysAudio.getProperty(SystemAudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER)
+        val framesPerBuffer = sysAudioManager.getProperty(SystemAudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER)
             ?.toIntOrNull() ?: 256
         Log.d("AudioManager", "Device native: ${nativeSampleRate}Hz, $framesPerBuffer frames/buffer")
 
@@ -160,6 +169,38 @@ class AudioManager private constructor(context: Context) {
             .setMaxStreams(32)
             .setAudioAttributes(attrs)
             .build()
+
+        // Stop sounds when headphones are unplugged so audio doesn't blast from speaker.
+        noisyReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                if (intent.action == SystemAudioManager.ACTION_AUDIO_BECOMING_NOISY) {
+                    Log.d("AudioManager", "Headphones disconnected (AUDIO_BECOMING_NOISY) — stopping all sounds")
+                    stopAll()
+                }
+            }
+        }
+        appContext.registerReceiver(noisyReceiver, IntentFilter(SystemAudioManager.ACTION_AUDIO_BECOMING_NOISY))
+
+        // Log device add/remove events. SoundPool re-routes to new output automatically;
+        // no restart is needed unlike AVAudioEngine on iOS.
+        audioDeviceCallback = object : AudioDeviceCallback() {
+            override fun onAudioDevicesAdded(addedDevices: Array<AudioDeviceInfo>) {
+                for (device in addedDevices) {
+                    if (device.isSink) {
+                        Log.d("AudioManager", "Audio output connected: ${device.productName} (type ${device.type})")
+                    }
+                }
+            }
+
+            override fun onAudioDevicesRemoved(removedDevices: Array<AudioDeviceInfo>) {
+                for (device in removedDevices) {
+                    if (device.isSink) {
+                        Log.d("AudioManager", "Audio output disconnected: ${device.productName} (type ${device.type})")
+                    }
+                }
+            }
+        }
+        sysAudioManager.registerAudioDeviceCallback(audioDeviceCallback, Handler(Looper.getMainLooper()))
 
         preloadAllSounds()
     }
@@ -255,6 +296,8 @@ class AudioManager private constructor(context: Context) {
      */
     fun release() {
         stopAll()
+        appContext.unregisterReceiver(noisyReceiver)
+        sysAudioManager.unregisterAudioDeviceCallback(audioDeviceCallback)
         soundPool.release()
     }
 

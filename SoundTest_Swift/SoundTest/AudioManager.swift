@@ -214,8 +214,33 @@ final class AudioManager {
     }
 
     @objc private func handleRouteChange(_ notification: Notification) {
-        guard !engine.isRunning else { return }
-        try? engine.start()
+        guard let userInfo = notification.userInfo,
+              let reasonValue = userInfo[AVAudioSessionRouteChangeReasonKey] as? UInt,
+              let reason = AVAudioSession.RouteChangeReason(rawValue: reasonValue)
+        else {
+            // No reason info — just ensure engine is running
+            if !engine.isRunning { try? engine.start() }
+            return
+        }
+
+        switch reason {
+        case .newDeviceAvailable:
+            // A new output was connected (EarPods, Bluetooth headphones, etc.)
+            // Stop and restart so AVAudioEngine re-targets the new route.
+            engine.stop()
+            try? engine.start()
+
+        case .oldDeviceUnavailable:
+            // Headphones/EarPods were unplugged. iOS silences audio automatically,
+            // but the engine may have stopped. Restart it so built-in speaker works.
+            if !engine.isRunning { try? engine.start() }
+
+        case .categoryChange, .override, .wakeFromSleep, .noSuitableRouteForCategory, .routeConfigurationChange:
+            if !engine.isRunning { try? engine.start() }
+
+        default:
+            if !engine.isRunning { try? engine.start() }
+        }
     }
 
 
