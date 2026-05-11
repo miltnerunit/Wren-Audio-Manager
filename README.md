@@ -99,9 +99,13 @@ AudioManager.stopAll()
 
 ## Adding a New Sound Event
 
-Sound events are defined in `SoundEventList.csv` — not in code. `SoundEvent.swift` and `SoundEvent.kt` are auto-generated from the CSV at build time. Do not edit them directly.
+Sound events are defined in `SoundEventList.csv`, exported from the sound designer's asset list. `SoundEvent.swift` and `SoundEvent.kt` are auto-generated from the CSV at build time.
 
-1. **Add a row** to `SoundEventList.csv` with the required columns (see [Sound Event List](#sound-event-list))
+In your exported `SoundEventList.csv`, as long as you have these columns, the generator will pick up the entire sound manifest and its parameters: `Filename`, `Loop?`, `Max Voices`, `Category`, `Trigger` — and if any sounds have variations, also `Variation Mode`, `Variation Count`, and `Variation Suffix`. Any additional columns are ignored.
+
+1. **Export** `SoundEventList.csv` from your asset list spreadsheet to the repo root
+
+   ![Example asset list](docs/Wren_ExampleSheet.png)
 2. **Add the audio file(s)** to the app bundle:
    - iOS: drag into Xcode under the `Sounds` group
    - Android: place in `app/src/main/assets/sounds/`
