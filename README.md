@@ -4,7 +4,7 @@
 A lightweight, event-driven audio manager for cross-platform iOS/Android games and apps. Built on AVFoundation's `AVAudioEngine` and `AVAudioPlayerNode` for iOS, and `SoundPool` for Android. Designed for mobile experiences where the priority is snappy, precise, non-intrusive sound — polyphonic one-shots, sequential variations, and animation-driven sequencing.
 
 
-[![AudioManager Demo](https://vumbnail.com/1191320433.jpg)](https://vimeo.com/1191320433)
+[![AudioManager Demo](https://vumbnail.com/1191331099.jpg)](https://vimeo.com/1191331099)
 
 
 Built and maintained by [Kristin Miltner](https://kristinmiltner.com).
@@ -154,7 +154,7 @@ Any additional columns (status tracking, notes, etc.) are ignored by the generat
 
 The repo includes companion test apps for iOS (`SoundTest_Swift`) and Android (`SoundTest_Android`) for auditioning sounds and verifying manager behavior during development and QA.
 
-https://github.com/user-attachments/assets/0e50b4e6-931d-46e5-aec5-5ee180b036db
+[![AudioManager Debug App](https://vumbnail.com/1191331099.jpg)](https://vimeo.com/1191331099)
 
 ### Features
 
