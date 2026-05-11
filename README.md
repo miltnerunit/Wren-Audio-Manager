@@ -105,7 +105,7 @@ In your exported `SoundEventList.csv`, as long as you have these columns, the ge
 
 1. **Export** `SoundEventList.csv` from your asset list spreadsheet to the repo root
 
-   ![Example asset list](docs/Wren_ExampleSheet.png)
+   <img src="docs/Wren_ExampleSheet.png" width="300" alt="Example asset list">
 2. **Add the audio file(s)** to the app bundle:
    - iOS: drag into Xcode under the `Sounds` group
    - Android: place in `app/src/main/assets/sounds/`
