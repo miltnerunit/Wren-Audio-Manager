@@ -4,7 +4,7 @@
 A lightweight, event-driven audio manager for cross-platform iOS/Android games and apps. Built on AVFoundation's `AVAudioEngine` and `AVAudioPlayerNode` for iOS, and `SoundPool` for Android. Designed for mobile experiences where the priority is snappy, precise, non-intrusive sound — polyphonic one-shots, sequential variations, and animation-driven sequencing.
 
 
-[![AudioManager Demo](https://vumbnail.com/1191331099.jpg)](https://vimeo.com/1191331099)
+[<img src="https://vumbnail.com/1191331099.jpg" width="300" alt="AudioManager Demo">](https://vimeo.com/1191331099)
 
 
 Built and maintained by [Kristin Miltner](https://kristinmiltner.com).
