@@ -99,91 +99,54 @@ AudioManager.stopAll()
 
 ## Adding a New Sound Event
 
-1. **Add the case** to the `SoundEvent` enum in `AudioManager.swift`:
+Sound events are defined in `SoundEventList.csv` — not in code. `SoundEvent.swift` and `SoundEvent.kt` are auto-generated from the CSV at build time. Do not edit them directly.
+
+1. **Add a row** to `SoundEventList.csv` with the required columns (see [Sound Event List](#sound-event-list))
+2. **Add the audio file(s)** to the app bundle:
+   - iOS: drag into Xcode under the `Sounds` group
+   - Android: place in `app/src/main/assets/sounds/`
+3. **Build** — the generator runs automatically and the new event is available immediately
 
 ```swift
-case myNewSound = "myNewSound"
-```
-
-The raw value must match the audio filename (without extension).
-
-2. **Set the voice limit** in the `maxVoices` property:
-
-```swift
-var maxVoices: Int {
-    switch self {
-    case .myNewSound: return 2   // add your case
-    ...
-    }
-}
-```
-
-If not specified, the default is 3 voices.
-
-3. **Set looping** if needed:
-
-```swift
-var loops: Bool {
-    switch self {
-    case .myNewSound: return true   // add only if this sound loops
-    ...
-    }
-}
-```
-
-4. **Add audio file(s)** to the Xcode bundle:
-   - Single file: `myNewSound.wav`
-   - Variations: `myNewSound_1.wav`, `myNewSound_2.wav`, etc.
-
-5. **Call it** from the appropriate animation or UI event:
-
-```swift
+// iOS — available as soon as the build succeeds
 AudioManager.shared.play(.myNewSound)
 ```
+
+```kotlin
+// Android
+AudioManager.shared.play(SoundEvent.MY_NEW_SOUND)
+```
+
+No enum edits, no code changes required.
 
 ---
 
 ## Configuring Voice Pools and Variations
 
-All audio design decisions live in the `SoundEvent` enum — not at the call site. This means engineers never have to think about how many voices a sound needs or how its variations behave.
+All audio design decisions live in `SoundEventList.csv` — not at the call site and not in code. Engineers never have to think about how many voices a sound needs or how its variations behave.
 
-### Voice Limit
+### CSV Columns
 
-Set `maxVoices` per event:
+| Column | Required | Description |
+|---|---|---|
+| `Filename` | ✓ | Audio filename including extension, e.g. `tilePickUp.wav` |
+| `Loop?` | ✓ | `TRUE` or `FALSE` |
+| `Max Voices` | ✓ | Max simultaneous voices. Default is 3. When full, oldest voice is stolen |
+| `Variation Mode` | | `random` or `sequential`. Leave blank for single-file events |
+| `Variation Count` | | Number of variation files. Leave blank for single-file events |
+| `Variation Suffix` | | Suffix pattern for variation filenames, e.g. `_1` → `tileDrop_1.wav`. Supports `_1`, `1`, or `01` (zero-padded) |
+| `Category` | | Groups events into sections in the test app UI |
+| `Trigger` | | Human-readable label shown in the test app UI |
 
-```swift
-var maxVoices: Int {
-    switch self {
-    case .reward1:    return 1   // stingers never overlap
-    case .tileDrop:   return 8   // rapid-fire stacking
-    default:                    return 3   // sensible default
-    }
-}
-```
+Any additional columns (status tracking, notes, etc.) are ignored by the generator.
 
-When all voices are busy, the oldest playing instance is stolen.
+### Variation File Naming
 
-### Variations
-
-Set `variationCount` and `variationMode` per event:
-
-```swift
-var variationCount: Int {
-    switch self {
-    case .tileDrop:    return 8   // 8 files: tileDrop_1.wav … _8.wav
-    case .tilePlace:   return 8
-    default:                    return 1   // single file, no suffix
-    }
-}
-
-var variationMode: VariationMode {
-    switch self {
-    case .tilePlace:   return .sequential   // _1 → _2 → … → _8 → _1
-    case .tileDrop:    return .random       // random, no immediate repeat
-    default:                    return .random
-    }
-}
-```
+| Suffix style | Files generated |
+|---|---|
+| `_1` (default) | `eventName_1.wav`, `eventName_2.wav`, … |
+| `1` | `eventName1.wav`, `eventName2.wav`, … |
+| `01` | `eventName01.wav`, `eventName02.wav`, … |
 
 ---
 
@@ -211,7 +174,19 @@ The test apps are intended as a shared tool between sound designer and engineeri
 
 ## Sound Event List
 
-The full list of sound events, including variation counts and file naming, is in [SoundEvents.csv](SoundEvents.csv).
+The full list of sound events is in [SoundEventList.csv](SoundEventList.csv). This is the source of truth for both platforms — edit it in any spreadsheet app (Numbers, Excel, Google Sheets) and export as `.csv` to the repo root before building.
+
+## Code Generation
+
+`SoundEvent.swift` and `SoundEvent.kt` are auto-generated from `SoundEventList.csv` by `scripts/generate_sound_events.py`. Both Xcode and Android Studio run the script automatically as a pre-build step — you never need to run it manually.
+
+To run it manually (e.g. to inspect the output before building):
+
+```bash
+python3 scripts/generate_sound_events.py
+```
+
+Note: While you _can_ manually add sound events to `SoundEvent.swift` or `SoundEvent.kt` directly, those changes will be overwritten on next build.
 
 ---
 
