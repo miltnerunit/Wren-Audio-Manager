@@ -3,61 +3,27 @@ import Combine
 
 struct ContentView: View {
 
-    // Tracks which looping sounds are currently active
     @State private var looping: Set<SoundEvent> = []
     @State private var voiceCounts: [SoundEvent: Int] = [:]
     @State private var lastFilenames: [SoundEvent: String] = [:]
 
-    @ViewBuilder
-    func soundBtn(_ label: String, event: SoundEvent) -> some View {
-        SoundButton(label, event: event, voiceCount: voiceCounts[event] ?? 0, lastFilename: lastFilenames[event])
-    }
-
     var body: some View {
         NavigationStack {
             List {
-
-                // MARK: Tile Interactions
-                Section("Tile Interactions") {
-                    soundBtn("Tile Pick Up", event: .tilePickUp)
-                    // 4 random-no-repeat variations — tap repeatedly to hear cycling
-                    soundBtn("Tile Drop (×8 random)", event: .tileDrop)
-                    Button("↺ Reset Tile Drop pool") {
-                        AudioManager.shared.resetShufflePool(.tileDrop)
+                ForEach(SoundEvent.categories, id: \.self) { category in
+                    Section(category) {
+                        ForEach(SoundEvent.allCases.filter { $0.category == category }) { event in
+                            if event.loops {
+                                LoopButton(event.displayName, event: event, looping: $looping)
+                            } else {
+                                SoundButton(event.displayName, event: event,
+                                            voiceCount: voiceCounts[event] ?? 0,
+                                            lastFilename: lastFilenames[event])
+                            }
+                        }
                     }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    // 4 sequential variations — each tap advances the counter
-                    soundBtn("Tile Place (×8 seq)", event: .tilePlace)
                 }
 
-                // MARK: UI
-                Section("UI") {
-                    soundBtn("Tap",          event: .uiTap)
-                    soundBtn("Modal Open",   event: .uiModalOpen)
-                    soundBtn("Modal Close",  event: .uiModalClose)
-                }
-
-                // MARK: Game
-                Section("Game") {
-                    soundBtn("Success", event: .gameSuccess)
-                    soundBtn("Error",   event: .gameError)
-                }
-
-                // MARK: Rewards (voice-limited to 1)
-                Section("Rewards (voice limit = 1)") {
-                    soundBtn("Reward 1", event: .reward1)
-                    soundBtn("Reward 2", event: .reward2)
-                    soundBtn("Reward 3", event: .reward3)
-                    soundBtn("Reward 4", event: .reward4)
-                }
-
-                // MARK: Looping
-                Section("Looping") {
-                    LoopButton("Ambient (loop)", event: .loopAmbient, looping: $looping)
-                }
-
-                // MARK: Stop All
                 Section {
                     Button(role: .destructive) {
                         AudioManager.shared.stopAll()

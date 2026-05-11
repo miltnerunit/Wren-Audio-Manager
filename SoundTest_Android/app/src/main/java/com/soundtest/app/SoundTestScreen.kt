@@ -21,7 +21,6 @@ fun SoundTestScreen() {
     val voiceCounts = remember { mutableStateMapOf<SoundEvent, Int>() }
     val lastFilenames = remember { mutableStateMapOf<SoundEvent, String>() }
 
-    // Poll AudioManager at 100ms for voice counts and last filenames
     LaunchedEffect(Unit) {
         while (true) {
             SoundEvent.entries.filter { it.maxVoices > 1 }.forEach { event ->
@@ -59,43 +58,19 @@ fun SoundTestScreen() {
             ),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-
-            // MARK: Tile Interactions
-            item { SectionHeader("Tile Interactions") }
-            item { SoundRow("Tile Pick Up",           SoundEvent.TILE_PICK_UP, voiceCounts, lastFilenames) }
-            // 4 random-no-repeat variations — tap repeatedly to hear cycling
-            item { SoundRow("Tile Drop (×8 random)",  SoundEvent.TILE_DROP,    voiceCounts, lastFilenames) }
-            item {
-                ResetButton("↺ Reset Tile Drop pool") {
-                    AudioManager.shared.resetShufflePool(SoundEvent.TILE_DROP)
+            SoundEvent.categories.forEach { category ->
+                item { SectionHeader(category) }
+                SoundEvent.entries.filter { it.category == category }.forEach { event ->
+                    item {
+                        if (event.loops) {
+                            LoopRow(event.displayName, event, looping)
+                        } else {
+                            SoundRow(event.displayName, event, voiceCounts, lastFilenames)
+                        }
+                    }
                 }
             }
-            // 4 sequential variations — each tap advances the counter
-            item { SoundRow("Tile Place (×8 seq)",    SoundEvent.TILE_PLACE,   voiceCounts, lastFilenames) }
 
-            // MARK: UI
-            item { SectionHeader("UI") }
-            item { SoundRow("Tap",          SoundEvent.UI_TAP,          voiceCounts, lastFilenames) }
-            item { SoundRow("Modal Open",   SoundEvent.UI_MODAL_OPEN,   voiceCounts, lastFilenames) }
-            item { SoundRow("Modal Close",  SoundEvent.UI_MODAL_CLOSE,  voiceCounts, lastFilenames) }
-
-            // MARK: Game
-            item { SectionHeader("Game") }
-            item { SoundRow("Success", SoundEvent.GAME_SUCCESS, voiceCounts, lastFilenames) }
-            item { SoundRow("Error",   SoundEvent.GAME_ERROR,   voiceCounts, lastFilenames) }
-
-            // MARK: Rewards
-            item { SectionHeader("Rewards (voice limit = 1)") }
-            item { SoundRow("Reward 1", SoundEvent.REWARD_1, voiceCounts, lastFilenames) }
-            item { SoundRow("Reward 2", SoundEvent.REWARD_2, voiceCounts, lastFilenames) }
-            item { SoundRow("Reward 3", SoundEvent.REWARD_3, voiceCounts, lastFilenames) }
-            item { SoundRow("Reward 4", SoundEvent.REWARD_4, voiceCounts, lastFilenames) }
-
-            // MARK: Looping
-            item { SectionHeader("Looping") }
-            item { LoopRow("Ambient (loop)", SoundEvent.LOOP_AMBIENT, looping) }
-
-            // MARK: Stop All
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
@@ -198,18 +173,4 @@ private fun SectionHeader(title: String) {
         modifier = Modifier.padding(top = 16.dp, bottom = 2.dp)
     )
     HorizontalDivider()
-}
-
-
-// MARK: - Reset button
-
-@Composable
-private fun ResetButton(label: String, onClick: () -> Unit) {
-    TextButton(onClick = onClick) {
-        Text(
-            label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
 }

@@ -58,6 +58,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = C26047EF2F7B27B300A5CD74 /* Build configuration list for PBXNativeTarget "SoundTest" */;
 			buildPhases = (
+				C26048102F7B27B100A5CD74 /* Generate SoundEvent.swift */,
 				C26047E02F7B27B100A5CD74 /* Sources */,
 				C26047E12F7B27B100A5CD74 /* Frameworks */,
 				C26047E22F7B27B100A5CD74 /* Resources */,
@@ -121,6 +122,25 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		C26048102F7B27B100A5CD74 /* Generate SoundEvent.swift */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/../SoundEventList.csv",
+			);
+			name = "Generate SoundEvent.swift";
+			outputPaths = (
+				"$(SRCROOT)/SoundTest/SoundEvent.swift",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\ncd \"$SRCROOT/..\"\npython3 scripts/generate_sound_events.py\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		C26047E02F7B27B100A5CD74 /* Sources */ = {

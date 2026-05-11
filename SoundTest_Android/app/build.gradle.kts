@@ -39,6 +39,16 @@ android {
     }
 }
 
+tasks.register<Exec>("generateSoundEvents") {
+    inputs.file(rootProject.file("../SoundEventList.csv"))
+    outputs.file(file("src/main/java/com/soundtest/app/SoundEvent.kt"))
+    commandLine("python3", rootProject.file("../scripts/generate_sound_events.py").absolutePath)
+}
+
+tasks.named("preBuild") {
+    dependsOn("generateSoundEvents")
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

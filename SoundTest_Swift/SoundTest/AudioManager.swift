@@ -1,110 +1,5 @@
 import AVFoundation
 
-// MARK: - Variation Mode
-
-/// Controls how a sound event cycles through its delivered variations.
-enum VariationMode {
-    /// Plays variations in order, wrapping back to 1 after the last.
-    case sequential
-    /// Plays a random variation, never repeating the same one twice in a row.
-    case random
-}
-
-
-// MARK: - Sound Events
-
-enum SoundEvent: String, CaseIterable {
-
-    // MARK: Tile Interactions
-    case tilePickUp         = "tilePickUp"
-    case tileDrop           = "tileDrop"            // 8 variations, random no-repeat
-    case tilePlace          = "tilePlace"           // 4 variations, sequential
-
-    // MARK: UI
-    case uiTap              = "uiTap"
-    case uiModalOpen        = "uiModalOpen"
-    case uiModalClose       = "uiModalClose"
-
-    // MARK: Game
-    case gameSuccess        = "gameSuccess"
-    case gameError          = "gameError"
-
-    // MARK: Rewards (voice limit: 1)
-    case reward1            = "reward1"
-    case reward2            = "reward2"
-    case reward3            = "reward3"
-    case reward4            = "reward4"
-
-    // MARK: Looping
-    case loopAmbient        = "loopAmbient"         // looping — stop() to end
-
-
-    // MARK: - Voice Pool Configuration
-
-    /// Maximum simultaneous voices for this event.
-    /// When the limit is reached, the oldest playing voice is stolen.
-    var maxVoices: Int {
-        switch self {
-
-        // Rewards: never overlap
-        case .reward1,
-             .reward2,
-             .reward3,
-             .reward4:
-            return 1
-
-        // Looping sounds: one instance at a time
-        case .loopAmbient:
-            return 1
-
-        // Rapid-fire tile interactions: allow stacking
-        case .tileDrop,
-             .tilePlace:
-            return 8
-
-        case .tilePickUp:
-            return 4
-
-        // Everything else: sensible default
-        default:
-            return 3
-        }
-    }
-
-    /// Whether this event loops until explicitly stopped.
-    var loops: Bool {
-        switch self {
-        case .loopAmbient:
-            return true
-        default:
-            return false
-        }
-    }
-
-    /// Number of delivered variation files for this event.
-    /// Variations are named [rawValue]_1.wav, [rawValue]_2.wav, etc.
-    /// Events with variationCount == 1 use [rawValue].wav directly.
-    var variationCount: Int {
-        switch self {
-        case .tileDrop:     return 8
-        case .tilePlace:    return 8
-        default:            return 1
-        }
-    }
-
-    /// How variations are selected on each play call.
-    var variationMode: VariationMode {
-        switch self {
-        case .tilePlace:    return .sequential  // cycles 1 → 2 → 3 → 4 → 1
-        case .tileDrop:     return .random      // random, never repeats last played
-        default:            return .random
-        }
-    }
-
-    /// File extension
-    var fileExtension: String { "wav" }
-}
-
 
 // MARK: - Voice
 
@@ -190,7 +85,7 @@ final class AudioManager {
         for event in SoundEvent.allCases {
             if event.variationCount > 1 {
                 for i in 1...event.variationCount {
-                    _ = loadBuffer(filename: "\(event.rawValue)_\(i)", ext: event.fileExtension)
+                    _ = loadBuffer(filename: "\(event.rawValue)\(event.variationSeparator)\(i)", ext: event.fileExtension)
                 }
             } else {
                 _ = loadBuffer(filename: event.rawValue, ext: event.fileExtension)
@@ -200,7 +95,7 @@ final class AudioManager {
 
     private func warmUpEngine() {
         for event in SoundEvent.allCases {
-            let filename = event.variationCount > 1 ? "\(event.rawValue)_1" : event.rawValue
+            let filename = event.variationCount > 1 ? "\(event.rawValue)\(event.variationSeparator)1" : event.rawValue
             let cacheKey = "\(filename).\(event.fileExtension)"
             guard let format = bufferCache[cacheKey]?.format else { continue }
             let voices = (0..<event.maxVoices).map { _ in makeVoice(format: format) }
@@ -328,7 +223,7 @@ final class AudioManager {
         let current = sequentialCounters[key] ?? 0
         let next = (current % event.variationCount) + 1  // 1 → 2 → … → N → 1
         sequentialCounters[key] = next
-        return "\(event.rawValue)_\(next)"
+        return "\(event.rawValue)\(event.variationSeparator)\(next)"
     }
 
     private func nextRandomVariation(for event: SoundEvent) -> String {
@@ -346,7 +241,7 @@ final class AudioManager {
 
         let chosen = randomShufflePool[key]!.removeFirst()
         lastRandomVariation[key] = chosen
-        return "\(event.rawValue)_\(chosen)"
+        return "\(event.rawValue)\(event.variationSeparator)\(chosen)"
     }
 
 

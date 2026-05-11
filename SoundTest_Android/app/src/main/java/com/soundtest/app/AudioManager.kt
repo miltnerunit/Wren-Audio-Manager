@@ -15,80 +15,6 @@ import android.os.Looper
 import android.util.Log
 
 
-// MARK: - Variation Mode
-
-enum class VariationMode {
-    SEQUENTIAL,
-    RANDOM
-}
-
-
-// MARK: - Sound Events
-
-enum class SoundEvent(val rawValue: String) {
-
-    // Tile Interactions
-    TILE_PICK_UP("tilePickUp"),
-    TILE_DROP("tileDrop"),              // 4 variations, random no-repeat
-    TILE_PLACE("tilePlace"),            // 4 variations, sequential
-
-    // UI
-    UI_TAP("uiTap"),
-    UI_MODAL_OPEN("uiModalOpen"),
-    UI_MODAL_CLOSE("uiModalClose"),
-
-    // Game
-    GAME_SUCCESS("gameSuccess"),
-    GAME_ERROR("gameError"),
-
-    // Rewards (voice limit: 1)
-    REWARD_1("reward1"),
-    REWARD_2("reward2"),
-    REWARD_3("reward3"),
-    REWARD_4("reward4"),
-
-    // Looping
-    LOOP_AMBIENT("loopAmbient");        // looping — stop() to end
-
-
-    // MARK: - Voice Pool Configuration
-
-    val maxVoices: Int get() = when (this) {
-        REWARD_1,
-        REWARD_2,
-        REWARD_3,
-        REWARD_4 -> 1
-
-        LOOP_AMBIENT -> 1
-
-        TILE_DROP,
-        TILE_PLACE -> 8
-
-        TILE_PICK_UP -> 4
-
-        else -> 3
-    }
-
-    val loops: Boolean get() = when (this) {
-        LOOP_AMBIENT -> true
-        else -> false
-    }
-
-    val variationCount: Int get() = when (this) {
-        TILE_DROP  -> 8
-        TILE_PLACE -> 8
-        else       -> 1
-    }
-
-    val variationMode: VariationMode get() = when (this) {
-        TILE_PLACE -> VariationMode.SEQUENTIAL
-        else       -> VariationMode.RANDOM
-    }
-
-    val fileExtension: String get() = "wav"
-}
-
-
 // MARK: - AudioManager
 
 class AudioManager private constructor(context: Context) {
@@ -210,7 +136,7 @@ class AudioManager private constructor(context: Context) {
             for (event in SoundEvent.entries) {
                 if (event.variationCount > 1) {
                     for (i in 1..event.variationCount) {
-                        loadSound("${event.rawValue}_$i", event.fileExtension)
+                        loadSound("${event.rawValue}${event.variationSeparator}$i", event.fileExtension)
                     }
                 } else {
                     loadSound(event.rawValue, event.fileExtension)
@@ -284,7 +210,7 @@ class AudioManager private constructor(context: Context) {
                 loadSound(event.rawValue, event.fileExtension)
             } else {
                 for (i in 1..event.variationCount) {
-                    loadSound("${event.rawValue}_$i", event.fileExtension)
+                    loadSound("${event.rawValue}${event.variationSeparator}$i", event.fileExtension)
                 }
             }
         }
@@ -326,7 +252,7 @@ class AudioManager private constructor(context: Context) {
         val current = sequentialCounters[key] ?: 0
         val next = (current % event.variationCount) + 1  // 1 → 2 → … → N → 1
         sequentialCounters[key] = next
-        return "${event.rawValue}_$next"
+        return "${event.rawValue}${event.variationSeparator}$next"
     }
 
     private fun nextRandomVariation(event: SoundEvent): String {
@@ -343,7 +269,7 @@ class AudioManager private constructor(context: Context) {
         }
         val chosen = randomShufflePool[key]!!.removeFirst()
         lastRandomVariation[key] = chosen
-        return "${event.rawValue}_$chosen"
+        return "${event.rawValue}${event.variationSeparator}$chosen"
     }
 
 
